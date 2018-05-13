@@ -161,6 +161,7 @@ void main()
 {
     float size = v_size +2*(v_linewidth + 1.5*v_antialias);
     float t = v_linewidth/2.0-v_antialias;
+    // shapes to use as nodes
     float r = disc(gl_PointCoord, size);
     // float r = square(gl_PointCoord, size);
     // float r = ring(gl_PointCoord, size);
@@ -196,16 +197,17 @@ use_app('PyQt5')
 # ------------------------------------------------------------ Canvas class ---
 class MyCanvas(app.Canvas):
 
-    def __init__(self):
+    def __init__(self, vertNum):
         app.Canvas.__init__(self, keys='interactive', size=(800, 600))
         ps = self.pixel_scale
 
         # Create vertices
-        n = 10000
+        n = vertNum
         data = np.zeros(n, [('a_position', np.float32, 3),
                             ('a_bg_color', np.float32, 4),
                             ('a_fg_color', np.float32, 4),
                             ('a_size', np.float32, 1)])
+        print(data)
         data['a_position'] = 0.45 * np.random.randn(n, 3)
         data['a_bg_color'] = np.random.uniform(0.85, 1.00, (n, 4))
         data['a_fg_color'] = 0, 0, 0, 1
@@ -265,7 +267,7 @@ class MyCanvas(app.Canvas):
 
     def on_draw(self, event):
         gloo.clear()
-        self.program.draw('points')
+        self.program.draw('POINTS')
 
     def apply_zoom(self):
         gloo.set_viewport(0, 0, self.physical_size[0], self.physical_size[1])

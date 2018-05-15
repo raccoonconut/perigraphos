@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 import sys
 import os
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call as call_ext
 from PyQt5.QtWidgets import (QApplication,
 QWidget, QFileDialog, QMainWindow,
 QPushButton, QVBoxLayout, QHBoxLayout, QLayout, QGridLayout)
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtSvg
+from PyQt5.QtCore import QProcess
 
 from canvas import MyCanvas
 from indradb import *
@@ -38,7 +39,6 @@ class App(QMainWindow):
         self.setWindowIcon(QIcon(SCRIPT_DIR + os.path.sep + 'icon.png'))
 
 
-path = '/home/orestes/Workspace/bin/indradb/'
 server_proc = None
 
 
@@ -48,9 +48,13 @@ class ControlWidgets(QWidget):
         super(ControlWidgets, self).__init__(parent)
         self.__controls()
         self.__layout()
-        self.button1.clicked.connect(self.call_indradb)
+        Database.parent = parent
+        self.button1.clicked.connect(Database.start_server)
         self.button2.clicked.connect(Database.stop_server)
         self.button3.clicked.connect(Database.connect_client)
+
+        self.button4.clicked.connect(Database.create_random_node)
+        self.button5.clicked.connect(Database.list_all_vertices)
 
         self.server_proc = None
 
@@ -59,8 +63,8 @@ class ControlWidgets(QWidget):
         self.button2 = QPushButton("stop")
         self.button3 = QPushButton("connect")
 
-        self.button4 = QPushButton("MaxPaths")
-        self.button5 = QPushButton("Generate")
+        self.button4 = QPushButton("Create Node")
+        self.button5 = QPushButton("Get Vert")
         self.button6 = QPushButton("connect")
 
 
@@ -79,10 +83,6 @@ class ControlWidgets(QWidget):
     def get_layout(self):
         return self.vbox
 
-    def call_indradb(self):
-        Database.start_server(path)
-        print('hello')
-
     def connect_client(self):
         try:
             Database.connect_client()
@@ -94,23 +94,51 @@ class ControlWidgets(QWidget):
 class Database(object):
     proc = None
     client = None
+    nodeID = 1
+    dbPath = '/home/orestes/Workspace/bin/indradb/'
+    parent = None
 
     @staticmethod
-    def start_server(dbPath):
-        Database.proc = Popen(['exec', dbPath + "indradb-server"], stdout=PIPE, shell=True, stderr=PIPE)
+    def start_server(self):
+        # Database.proc = Popen(dbPath + "indradb-server", stdout=PIPE, shell=True, stderr=PIPE)
+        # Database.proc = QProcess.startDetached(Database.dbPath + "indradb-server")
+        Database.proc = QProcess(Database.parent)
+        Database.proc.start(Database.dbPath + "indradb-server")
+        # stdout, stderr = Database.proc.communicate()
+        # print(stdout, stderr)
 
     @staticmethod
     def stop_server(self):
-        try:
-            Database.proc.terminate()
-            print(PIPE)
-        except AttributeError as e:
-            print(e)
+        if Database.proc != None:
+            try:
+                # Database.proc.terminate()
+                Database.proc.kill()
+                Database.proc = None
+                print('server stopped')
+
+            except AttributeError as e:
+                print('Unable to stop server ', e)
+
 
     @staticmethod
     def connect_client(self):
-        Database.client = Client('0.0.0.0:8000', request_timeout=60, scheme='https')
-        print(Database.client.scheme)
+        Database.client = Client('0.0.0.0:8000', request_timeout=60, scheme='http')
+        print(Database.client._session)
+
+    # TEST METHOD
+    @staticmethod
+    def create_random_node(self):
+        trans = Transaction()
+        trans.create_vertex_from_type('person')
+        Database.nodeID += 1
+        print(Database.client.transaction(trans))
+
+    @staticmethod
+    def list_all_vertices(self):
+        trans = Transaction()
+        vertices = trans.get_vertices(VertexQuery.all("00000000-0000-0000-0000-000000000000", 10000))
+        print(Database.client.transaction(trans))
+
 
 
 if __name__ == '__main__':

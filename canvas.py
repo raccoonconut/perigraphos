@@ -207,7 +207,7 @@ class MyCanvas(app.Canvas):
                             ('a_bg_color', np.float32, 4),
                             ('a_fg_color', np.float32, 4),
                             ('a_size', np.float32, 1)])
-        print(data)
+
         data['a_position'] = 0.45 * np.random.randn(n, 3)
         data['a_bg_color'] = np.random.uniform(0.85, 1.00, (n, 4))
         data['a_fg_color'] = 0, 0, 0, 1
@@ -277,6 +277,7 @@ class MyCanvas(app.Canvas):
 
 
 if __name__ == '__main__':
-    c = MyCanvas()
+    vertNum = 10
+    c = MyCanvas(vertNum)
     c.show()
     app.run()

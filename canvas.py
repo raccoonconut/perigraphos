@@ -194,18 +194,20 @@ void main()
 
 use_app('PyQt5')
 
-# ------------------------------------------------------------ Canvas class ---
+
 class MyCanvas(app.Canvas):
 
-    def __init__(self, vertNum):
+    def __init__(self, *nodes):
         app.Canvas.__init__(self, keys='interactive', size=(800, 600))
         ps = self.pixel_scale
 
-        # Create vertices
-        n = vertNum
+        # Get number of vertices
+        n = len(nodes)
+        # added id column to insert ids from indradb
         data = np.zeros(n, [('a_position', np.float32, 3),
                             ('a_bg_color', np.float32, 4),
                             ('a_fg_color', np.float32, 4),
+                            ('id', np.integer, 1),
                             ('a_size', np.float32, 1)])
 
         data['a_position'] = 0.45 * np.random.randn(n, 3)
@@ -237,7 +239,6 @@ class MyCanvas(app.Canvas):
 
         self.timer = app.Timer('auto', connect=self.on_timer, start=True)
 
-
     def on_key_press(self, event):
         if event.text == ' ':
             if self.timer.running:
@@ -267,7 +268,7 @@ class MyCanvas(app.Canvas):
 
     def on_draw(self, event):
         gloo.clear()
-        self.program.draw('POINTS')
+        self.program.draw('points')
 
     def apply_zoom(self):
         gloo.set_viewport(0, 0, self.physical_size[0], self.physical_size[1])
@@ -275,9 +276,28 @@ class MyCanvas(app.Canvas):
                                       float(self.size[1]), 1.0, 1000.0)
         self.program['u_projection'] = self.projection
 
+    # def on_mouse_move(self, event):
+    #     self.print_mouse_event(event, 'Mouse move')
+
+    def on_mouse_press(self, event):
+        self.print_mouse_event(event, 'Mouse press')
+        print(data)
+
+    def on_mouse_release(self, event):
+        self.print_mouse_event(event, 'Mouse release')
+
+    def print_mouse_event(self, event, what):
+        modifiers = ', '.join([key.name for key in event.modifiers])
+        print('%s - pos: %r, button: %s, modifiers: %s, delta: %r' %
+              (what, event.pos, event.button, modifiers, event.delta))
+
+    def on_close(self, event):
+        self.timer.stop()
+
 
 if __name__ == '__main__':
-    vertNum = 10
-    c = MyCanvas(vertNum)
+    # Example of node IDs
+    nodes = [1, 2, 3, 4, 5]
+    c = MyCanvas(*nodes)
     c.show()
     app.run()

@@ -46,7 +46,3 @@ if __name__ == '__main__':
     win = App()
     win.show()
     sys.exit(app.exec_())
-
-    # TODO
-    # terminate server when exiting app
-    #

@@ -11,10 +11,12 @@ import os
 from vispy import gloo
 from vispy import app, geometry
 from vispy.util.transforms import perspective, translate, rotate
+from vispy.visuals.graphs import layouts
 import vispy.scene
-from vispy.scene import visuals
+from vispy.visuals.transforms import STTransform
+# from vispy.scene import visuals
 from vispy.app import use_app
-
+from vispy.visuals import GraphVisual
 
 vert = """
 #version 120
@@ -213,7 +215,7 @@ class MyCanvas(app.Canvas):
         data['a_position'] = 0.45 * np.random.randn(n, 3)
         data['a_bg_color'] = np.random.uniform(0.85, 1.00, (n, 4))
         data['a_fg_color'] = 0, 0, 0, 1
-        data['a_size'] = np.random.uniform(5*ps, 10*ps, n)
+        data['a_size'] = np.random.uniform(5 * ps, 10 * ps, n)
         u_linewidth = 1.0
         u_antialias = 1.0
 
@@ -237,29 +239,48 @@ class MyCanvas(app.Canvas):
 
         gloo.set_state('translucent', clear_color='white')
 
-        self.timer = app.Timer('auto', connect=self.on_timer, start=True)
+        # self.timer = app.Timer('auto', connect=self.on_timer, start=True)
 
-    def on_key_press(self, event):
-        if event.text == ' ':
-            if self.timer.running:
-                self.timer.stop()
-            else:
-                self.timer.start()
+        graph = np.matrix([[0,1,0,0,1,0], [1,0,1,0,1,0], [0,1,0,1,0,0], [0,0,1,0,1,1], [1,1,0,1,0,0], [0,0,0,1,0,0]])
 
-    def on_timer(self, event):
-        self.theta += .5
-        self.phi += .5
-        self.model = np.dot(rotate(self.theta, (0, 0, 1)),
-                            rotate(self.phi, (0, 1, 0)))
-        self.program['u_model'] = self.model
-        self.update()
+        self.visual = GraphVisual(
+            graph, layout=layouts.get_layout('circular', iterations=100), line_color='black', arrow_type="stealth",
+            arrow_size=30, node_symbol="disc", node_size=20,
+            face_color=(1, 0, 1, 0.5), border_width=0.0, animate=True,
+            directed=False)
+        self.visual.transform = STTransform(self.visual_size, (20, 20))
+
+    # def on_key_press(self, event):
+    #     if event.text == ' ':
+    #         if self.timer.running:
+    #             self.timer.stop()
+    #         else:
+    #             self.timer.start()
+
+    # def on_timer(self, event):
+    #     self.theta += .5
+    #     self.phi += .5
+    #     self.model = np.dot(rotate(self.theta, (0, 0, 1)),
+    #                         rotate(self.phi, (0, 1, 0)))
+    #     self.program['u_model'] = self.model
+    #     self.update()
+
+    @property
+    def visual_size(self):
+        return self.physical_size[0] - 40, self.physical_size[1] - 40
 
     def on_resize(self, event):
+        self.visual.transform.scale = self.visual_size
+        vp = (0, 0, self.physical_size[0], self.physical_size[1])
+        self.context.set_viewport(*vp)
+        self.visual.transforms.configure(canvas=self, viewport=vp)
+
         self.apply_zoom()
 
     def on_mouse_wheel(self, event):
         self.translate -= event.delta[1]
         self.translate = max(2, self.translate)
+        # move the camera closer when zooming
         self.view = translate((0, 0, -self.translate))
 
         self.program['u_view'] = self.view
@@ -268,6 +289,10 @@ class MyCanvas(app.Canvas):
 
     def on_draw(self, event):
         gloo.clear()
+        self.context.clear('white')
+        self.visual.draw()
+        if not self.visual.animate_layout():
+            self.update()
         self.program.draw('points')
 
     def apply_zoom(self):
@@ -281,7 +306,7 @@ class MyCanvas(app.Canvas):
 
     def on_mouse_press(self, event):
         self.print_mouse_event(event, 'Mouse press')
-        print(data)
+        GraphVisual
 
     def on_mouse_release(self, event):
         self.print_mouse_event(event, 'Mouse release')
@@ -297,7 +322,7 @@ class MyCanvas(app.Canvas):
 
 if __name__ == '__main__':
     # Example of node IDs
-    nodes = [1, 2, 3, 4, 5]
+    nodes = [1, 2, 3, 4, 5, 10, 20]
     c = MyCanvas(*nodes)
     c.show()
     app.run()

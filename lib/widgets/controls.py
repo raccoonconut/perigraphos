@@ -14,12 +14,12 @@ class ControlWidgets(QWidget):
         self.__layout()
 
         self.button1.clicked.connect(Database.start_server)
-        self.button2.clicked.connect(Database.stop_server)
+        self.button2.clicked.connect(self.stop_server)
         self.button3.clicked.connect(Database.connect_client)
 
-        self.button4.clicked.connect(Database.create_random_node)
+        self.button4.clicked.connect(Database.create_random_dataset)
         self.button5.clicked.connect(Database.list_all_vertices)
-        # self.button6.clicked.connect(App.show_canvas)
+        self.button6.clicked.connect(Database.list_all_edges)
 
     def __controls(self):
         self.button1 = QPushButton("start")
@@ -28,7 +28,9 @@ class ControlWidgets(QWidget):
 
         self.button4 = QPushButton("Create Node")
         self.button5 = QPushButton("Get Vert")
-        self.button6 = QPushButton("Re-Draw")
+        self.button6 = QPushButton("Get Edges")
+
+        self.button7 = QPushButton("Re-Draw")
 
     def __layout(self):
         self.vbox = QVBoxLayout()
@@ -40,6 +42,7 @@ class ControlWidgets(QWidget):
         self.vbox.addWidget(self.button4)
         self.vbox.addWidget(self.button5)
         self.vbox.addWidget(self.button6)
+        self.vbox.addWidget(self.button7)
 
     def get_layout(self):
         return self.vbox
@@ -49,3 +52,6 @@ class ControlWidgets(QWidget):
             Database.connect_client()
         except Error as e:
             print(e)
+
+    def stop_server(self):
+        Database.stop_server()
